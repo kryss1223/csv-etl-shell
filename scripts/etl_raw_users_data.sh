@@ -64,37 +64,43 @@ do
     
     while IFS=',' read -r id nombre fecha email
     do
-	
         has_error=false
 
-	# Validaciones
-	if ! validate_empty_field "$id" "$nombre" "$fecha" "$email"; then
-	    echo "Campos vacíos: $id, $nombre, $fecha, $email" 
-	    has_error=true
-	fi
+	for campo in id nombre fecha email; do
+	    valor="${!campo}"
+	    case "$campo" in
+		id)
+		    if ! validate_id "$valor"; then
+		        echo "ID inválido: $valor"
+		        has_error=true
+		    fi
+		    ;;
+		nombre)
+		    if [ -z "$valor" ]; then
+		        echo "Nombre vacío"
+		        has_error=true
+		    fi
+		    ;;
+		fecha)
+		    if ! validate_date "$valor"; then
+		        echo "Fecha inválida: $valor"
+		        has_error=true
+		    fi
+		    ;;
+		email)
+		    if ! validate_email "$valor"; then
+		        echo "Email inválido: $valor"
+		        has_error=true
+		    fi
+		    ;;
 
-	if ! validate_id "$id"; then
-	    echo "ID inválido: $id" 
-	    has_error=true
-	fi
-
-
-	if ! validate_date "$fecha"; then
-	    echo "Fecha inválida: $fecha" 
-	    has_error=true
-	fi
-
-	if ! validate_email "$email"; then
-	    echo "Email inválido: $email" 
-	    has_error=true
-	fi
-
-	if [ "$has_error" = false ]; then
-    		echo "$id,$nombre,$fecha,$email" >> "$OUTPUT_DIR/clean_${filename}"
-    	else
-    		echo "$id,$nombre,$fecha,$email" >> "$LOG_DIR/log_${filename}"
-	fi
-
+             esac
+         done
+     if [ "$has_error" = false ]; then
+     echo "$id,$nombre,$fecha,$email" >> "$OUTPUT_DIR/clean_${filename}"
+     else
+     echo "$id,$nombre,$fecha,$email" >> "$LOG_DIR/log_${filename}"
+     fi
     done < "$file"
 done
 
